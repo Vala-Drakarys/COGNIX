@@ -1,54 +1,42 @@
-# COGNIX AI — Diagnostic Agent
+# COGNIX Diagnostic Agent — Agent-a-Thon Starter (debugged)
 
-**Team Novix | Agent-a-Thon 2026**
+A narrow, reusable diagnostic-agent prototype for recursion.
 
-## Overview
+## What it demonstrates
+- Hypothesis-driven diagnosis
+- One discriminating learner check at a time
+- Evidence that can support, contradict, or remain uncertain
+- Bounded hypothesis revision
+- Explicit learner confirmation / rejection
+- Persistent learner state (one JSON file per learner, under `state/`)
+- Safe stopping
+- Replay without an LLM
 
-COGNIX AI is an adaptive learning system designed to understand where a student is struggling and help guide their learning journey.
+## Requirements
+Python 3.10+. No third-party packages.
 
-For the Agent-a-Thon, we are building a focused **Diagnostic Agent** rather than the complete COGNIX system.
+## Run
+```bash
+python demo.py        # scripted replay, no API needed
+python test_agent.py  # 13 regression tests
+pytest test_agent.py  # optional, if pytest is installed
+```
 
-The Diagnostic Agent investigates why a student is struggling with a programming concept, tests possible misconceptions or prerequisite gaps, revises its hypothesis when evidence contradicts it, involves the student in confirming the diagnosis, and stores the resulting learner state.
+Set `COGNIX_STATE_DIR` to change where learner records are written
+(defaults to `./state`).
 
-## Problem
+## Files
+| File | Role |
+|---|---|
+| `models.py` | dataclasses for hypotheses, checks, learner state, run |
+| `store.py` | per-learner JSON persistence (atomic writes) |
+| `state_machine.py` | the deterministic controller — no model calls here |
+| `llm.py` | the only model boundary; `model_request` is a stub |
+| `demo.py` | four scripted cases, replayable without an API |
+| `test_agent.py` | regression tests for the controller invariants |
 
-A student may say:
-
-> "I understand recursion, but I can't solve recursion problems."
-
-A normal AI response may immediately provide an explanation. The problem is that the visible failure does not necessarily reveal the actual cause.
-
-The student may have difficulty with:
-
-- Base-case reasoning
-- Call-stack tracing
-- Parameter/state tracking
-- A prerequisite concept
-
-COGNIX treats diagnosis as an investigation rather than a single answer.
-
-## Diagnostic Agent
-
-The agent follows a controlled loop:
-
-```text
-Student Problem
-      ↓
-Observe
-      ↓
-Form Hypothesis
-      ↓
-Ask Diagnostic Check
-      ↓
-Evaluate Evidence
-      ↓
- ┌───────────────┐
- │               │
-Contradicted   Supported
- │               │
- ↓               ↓
-Revise        Confirm
- │               │
- └───────→ Store State
-                ↓
-               Stop
+## Wiring in a model
+`llm.py:model_request` raises `NotImplementedError` by design. Implement it
+against the organizer-approved API, validate the JSON it returns, then feed
+the validated fields into `choose_hypothesis` / `ask` / `evaluate`. The
+controller stays unchanged and stays deterministic.
